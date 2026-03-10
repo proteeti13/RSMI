@@ -1,31 +1,37 @@
-CC=g++ -O3 -std=c++14
+CC=g++ -O3 -std=c++17
 SRCS=$(wildcard *.cpp */*.cpp)
 OBJS=$(patsubst %.cpp, %.o, $(SRCS))
 
 # for MacOs
 # INCLUDE = -I/usr/local/include/libtorch/include -I/usr/local/include/libtorch/include/torch/csrc/api/include
-# LIB +=-L/usr/local/include/libtorch/lib -ltorch -lc10 -lpthread 
+# LIB +=-L/usr/local/include/libtorch/lib -ltorch -lc10 -lpthread
 # FLAG = -Xlinker -rpath -Xlinker /usr/local/include/libtorch/lib
 
-TYPE = CPU
-TYPE = GPU
+# ---- libtorch paths (edit LIBTORCH_CPU / LIBTORCH_GPU to match your install) ----
+# CPU download:
+#   wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.1%2Bcpu.zip
+#   unzip libtorch-cxx11-abi-shared-with-deps-2.5.1+cpu.zip
+#   mv libtorch ~/libtorch
+#
+# GPU (CUDA 12.1) download:
+#   wget https://download.pytorch.org/libtorch/cu121/libtorch-cxx11-abi-shared-with-deps-2.5.1%2Bcu121.zip
+#   unzip libtorch-cxx11-abi-shared-with-deps-2.5.1+cu121.zip
+#   mv libtorch ~/libtorch_gpu
 
-# for linux
+LIBTORCH_CPU = /home/proteetiwsl/libtorch
+LIBTORCH_GPU = /home/proteetiwsl/libtorch_gpu
+
+TYPE = CPU
+
 ifeq ($(TYPE), GPU)
-	INCLUDE = -I/home/liuguanli/Documents/libtorch_gpu/include -I/home/liuguanli/Documents/libtorch_gpu/include/torch/csrc/api/include
-	LIB +=-L/home/liuguanli/Documents/libtorch_gpu/lib -ltorch -lc10 -lpthread
-	FLAG = -Wl,-rpath=/home/liuguanli/Documents/libtorch_gpu/lib
+	LIBTORCH = $(LIBTORCH_GPU)
 else
-	INCLUDE = -I/home/liuguanli/Documents/libtorch/include -I/home/liuguanli/Documents/libtorch/include/torch/csrc/api/include
-	LIB +=-L/home/liuguanli/Documents/libtorch/lib -ltorch -lc10 -lpthread
-	FLAG = -Wl,-rpath=/home/liuguanli/Documents/libtorch/lib
+	LIBTORCH = $(LIBTORCH_CPU)
 endif
 
-
-
-# INCLUDE = -I/home/liuguanli/Documents/libtorch/include -I/home/liuguanli/Documents/libtorch/include/torch/csrc/api/include
-# LIB +=-L/home/liuguanli/Documents/libtorch/lib -ltorch -lc10 -lpthread
-# FLAG = -Wl,-rpath=/home/liuguanli/Documents/libtorch/lib
+INCLUDE = -I$(LIBTORCH)/include -I$(LIBTORCH)/include/torch/csrc/api/include
+LIB    += -L$(LIBTORCH)/lib -ltorch -ltorch_cpu -lc10 -lpthread
+FLAG    = -Wl,-rpath=$(LIBTORCH)/lib
 
 NAME=$(wildcard *.cpp)
 TARGET=$(patsubst %.cpp, %, $(NAME))

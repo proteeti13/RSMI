@@ -10,16 +10,15 @@ class Point
 public:
 
     float index;
-    float x;
-    float y;
+    float x;       // SourceID
+    float y;       // Hop1_ID
+    float z;       // Hop2_ID
     long long x_i;
     long long y_i;
-    long long curve_val;
-    float normalized_curve_val;
 
     float temp_dist = 0.0;
 
-    Point(float, float);
+    Point(float, float, float);
     Point();
     bool operator == (const Point& point);
     float cal_dist(Point);

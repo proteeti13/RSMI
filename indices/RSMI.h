@@ -9,9 +9,7 @@
 #include "../utils/ExpRecorder.h"
 #include "../utils/SortTools.h"
 #include "../utils/ModelTools.h"
-#include "../curves/hilbert.H"
-#include "../curves/hilbert4.H"
-#include "../curves/z.H"
+// Hilbert/Z-curve headers removed: 3D key space uses lex-offset, not space-filling curves
 #include <map>
 #include <boost/smart_ptr/make_shared_object.hpp>
 #include <torch/script.h>
@@ -39,7 +37,7 @@ private:
     int min_error = 0;
     int width = 0;
     int leaf_node_num;
-    
+
     bool is_last;
     Mbr mbr;
     std::shared_ptr<Net> net;
@@ -60,7 +58,6 @@ public:
     void point_query(ExpRecorder &exp_recorder, vector<Point> query_points);
 
     void window_query(ExpRecorder &exp_recorder, vector<Mbr> query_windows);
-    // vector<Point> window_query(ExpRecorder &exp_recorder, Mbr query_window);
     void window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr query_window, float boundary, int k, Point query_point, float &);
     void window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr query_window);
     void acc_window_query(ExpRecorder &exp_recorder, vector<Mbr> query_windows);
@@ -82,7 +79,6 @@ public:
 
 RSMI::RSMI()
 {
-    // leafnodes = vector<LeafNode>(10);
 }
 
 RSMI::RSMI(int index, int max_partition_num)
@@ -101,11 +97,11 @@ RSMI::RSMI(int index, int level, int max_partition_num)
 
 void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
 {
-
     int page_size = Constants::PAGESIZE;
     auto start = chrono::high_resolution_clock::now();
-    if (points.size() <= exp_recorder.N)
+    if (points.size() <= (size_t)exp_recorder.N)
     {
+        // ---- LEAF NODE ----
         this->model_path += "_" + to_string(level) + "_" + to_string(index);
         if (exp_recorder.depth < level)
         {
@@ -114,21 +110,14 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
         exp_recorder.last_level_model_num++;
         is_last = true;
         N = points.size();
-        long long side = pow(2, ceil(log(points.size()) / log(2)));
-        sort(points.begin(), points.end(), sortX());
+
+        // Data arrives pre-sorted by (SourceID, Hop1_ID, Hop2_ID).
+        // Build MBR and assign normalized lex-offset index directly.
+        // No Hilbert/Z-curve reordering — sorted order IS the 1D mapping.
         for (int i = 0; i < N; i++)
         {
-            points[i].x_i = i;
-            mbr.update(points[i].x, points[i].y);
+            mbr.update(points[i].x, points[i].y, points[i].z);
         }
-        sort(points.begin(), points.end(), sortY());
-        for (int i = 0; i < N; i++)
-        {
-            points[i].y_i = i;
-            long long curve_val = compute_Hilbert_value(points[i].x_i, points[i].y_i, side);
-            points[i].curve_val = curve_val;
-        }
-        sort(points.begin(), points.end(), sort_curve_val());
         width = N - 1;
         if (N == 1)
         {
@@ -148,15 +137,13 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
             auto bn = points.begin() + i * page_size;
             auto en = points.begin() + i * page_size + page_size;
             vector<Point> vec(bn, en);
-            // cout << vec.size() << " " << vec[0]->x_i << " " << vec[99]->x_i << endl;
             leafNode.add_points(vec);
             leafnodes.push_back(leafNode);
         }
 
         // for the last leafNode
-        if (points.size() > page_size * leaf_node_num)
+        if (points.size() > (size_t)(page_size * leaf_node_num))
         {
-            // TODO if do not delete will it last to the end of lifecycle?
             LeafNode leafNode;
             auto bn = points.begin() + page_size * leaf_node_num;
             auto en = points.end();
@@ -166,7 +153,9 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
             leaf_node_num++;
         }
         exp_recorder.leaf_node_num += leaf_node_num;
-        net = std::make_shared<Net>(2, leaf_node_num / 2 + 2);
+
+        // Net takes 3 inputs: (SourceID, Hop1_ID, Hop2_ID)
+        net = std::make_shared<Net>(3, leaf_node_num / 2 + 2);
         #ifdef use_gpu
             net->to(torch::kCUDA);
         #endif
@@ -176,14 +165,14 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
         {
             locations.push_back(point.x);
             locations.push_back(point.y);
+            locations.push_back(point.z);
             labels.push_back(point.index);
         }
-        
+
         std::ifstream fin(this->model_path);
         if (!fin)
         {
             net->train_model(locations, labels);
-            // torch::save(net, this->model_path);
         }
         else
         {
@@ -227,72 +216,81 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
     }
     else
     {
+        // ---- NON-LEAF NODE: 3D partitioning ----
+        // Partition by SourceID (x) → Hop1_ID (y) → Hop2_ID (z)
+        // Total cells: bit_num^3
         is_last = false;
         N = (long long)points.size();
         int bit_num = max_partition_num;
-        int partition_size = ceil(points.size() * 1.0 / pow(bit_num, 2));
+
+        int partition_size = (int)ceil(points.size() * 1.0 / pow(bit_num, 3));
+        partition_size = partition_size < 1 ? 1 : partition_size;
+
         sort(points.begin(), points.end(), sortX());
-        long long side = pow(bit_num, 2);
+        long long side = (long long)pow(bit_num, 3);
         width = side - 1;
         map<int, vector<Point>> points_map;
-        int each_item_size = partition_size * bit_num;
+
+        int each_xstrip_size = partition_size * bit_num * bit_num;
+        int each_ystrip_size = partition_size * bit_num;
         long long point_index = 0;
 
-        vector<float> locations(N * 2);
+        vector<float> locations(N * 3);
         vector<float> labels(N);
 
-        for (size_t i = 0; i < bit_num; i++)
+        for (size_t i = 0; i < (size_t)bit_num; i++)
         {
-            long long bn_index = i * each_item_size;
-            long long end_index = bn_index + each_item_size;
-            if (bn_index >= N)
-            {
-                break;
-            }
-            else
-            {
-                if (end_index > N)
-                {
-                    end_index = N;
-                }
-            }
+            long long bn_index  = i * each_xstrip_size;
+            long long end_index = bn_index + each_xstrip_size;
+            if (bn_index >= N) break;
+            if (end_index > N) end_index = N;
+
             auto bn = points.begin() + bn_index;
             auto en = points.begin() + end_index;
-            vector<Point> vec(bn, en);
-            sort(vec.begin(), vec.end(), sortY());
-            for (size_t j = 0; j < bit_num; j++)
+            vector<Point> xvec(bn, en);
+
+            sort(xvec.begin(), xvec.end(), sortY());
+
+            for (size_t j = 0; j < (size_t)bit_num; j++)
             {
-                long long sub_bn_index = j * partition_size;
-                long long sub_end_index = sub_bn_index + partition_size;
-                if (sub_bn_index >= vec.size())
+                long long ybn_index = j * each_ystrip_size;
+                long long yen_index = ybn_index + each_ystrip_size;
+                if (ybn_index >= (long long)xvec.size()) break;
+                if (yen_index > (long long)xvec.size()) yen_index = xvec.size();
+
+                auto ybn = xvec.begin() + ybn_index;
+                auto yen = xvec.begin() + yen_index;
+                vector<Point> yvec(ybn, yen);
+
+                sort(yvec.begin(), yvec.end(), sortZ());
+
+                for (size_t k = 0; k < (size_t)bit_num; k++)
                 {
-                    break;
-                }
-                else
-                {
-                    if (sub_end_index > vec.size())
+                    long long zbn_index = k * partition_size;
+                    long long zen_index = zbn_index + partition_size;
+                    if (zbn_index >= (long long)yvec.size()) break;
+                    if (zen_index > (long long)yvec.size()) zen_index = yvec.size();
+
+                    auto zbn = yvec.begin() + zbn_index;
+                    auto zen = yvec.begin() + zen_index;
+                    vector<Point> sub_vec(zbn, zen);
+
+                    // Linear partition id: i*B^2 + j*B + k  (range: [0, bit_num^3 - 1])
+                    int part_id = (int)(i * bit_num * bit_num + j * bit_num + k);
+
+                    for (Point point : sub_vec)
                     {
-                        sub_end_index = vec.size();
+                        point.index = part_id * 1.0 / width;
+                        locations[point_index * 3]     = point.x;
+                        locations[point_index * 3 + 1] = point.y;
+                        locations[point_index * 3 + 2] = point.z;
+                        labels[point_index]            = point.index;
+                        point_index++;
+                        mbr.update(point.x, point.y, point.z);
                     }
+                    vector<Point> temp;
+                    points_map.insert(pair<int, vector<Point>>(part_id, temp));
                 }
-                auto sub_bn = vec.begin() + sub_bn_index;
-                auto sub_en = vec.begin() + sub_end_index;
-                vector<Point> sub_vec(sub_bn, sub_en);
-                int Z_value = compute_Z_value(i, j, side);
-                int sub_point_index = 1;
-                long sub_size = sub_vec.size();
-                for (Point point : sub_vec)
-                {
-                    point.index = Z_value * 1.0 / width;
-                    locations[point_index * 2] = point.x;
-                    locations[point_index * 2 + 1] = point.y;
-                    labels[point_index] = point.index;
-                    point_index++;
-                    mbr.update(point.x, point.y);
-                    sub_point_index++;
-                }
-                vector<Point> temp;
-                points_map.insert(pair<int, vector<Point>>(Z_value, temp));
             }
         }
 
@@ -300,24 +298,15 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
         bool is_retrain = false;
         do
         {
-            net = std::make_shared<Net>(2);
+            net = std::make_shared<Net>(3);
             #ifdef use_gpu
                 net->to(torch::kCUDA);
             #endif
 
             this->model_path += "_" + to_string(level) + "_" + to_string(index);
             std::ifstream fin(this->model_path);
-                net->train_model(locations, labels);
+            net->train_model(locations, labels);
 
-            // if (!fin)
-            // {
-            //     net->train_model(locations, labels);
-            //     // torch::save(net, this->model_path);
-            // }
-            // else
-            // {
-            //     torch::load(net, this->model_path);
-            // }
             net->get_parameters();
 
             for (Point point : points)
@@ -358,7 +347,7 @@ void RSMI::build(ExpRecorder &exp_recorder, vector<Point> points)
 
         } while (is_retrain);
         auto finish = chrono::high_resolution_clock::now();
-        
+
         exp_recorder.non_leaf_node_num++;
 
         points.clear();
@@ -413,14 +402,14 @@ bool RSMI::point_query(ExpRecorder &exp_recorder, Point query_point)
                 return true;
             }
         }
-        // predicted result is not correct
+        // predicted result is not correct — local search within error bounds
         int front = predicted_index + min_error;
         front = front < 0 ? 0 : front;
         int back = predicted_index + max_error;
         back = back >= leaf_node_num ? leaf_node_num - 1 : back;
 
         int gap = 1;
-        int predicted_index_left = predicted_index - gap;
+        int predicted_index_left  = predicted_index - gap;
         int predicted_index_right = predicted_index + gap;
         while (predicted_index_left >= front && predicted_index_right <= back)
         {
@@ -431,7 +420,7 @@ bool RSMI::point_query(ExpRecorder &exp_recorder, Point query_point)
                 exp_recorder.page_access += 1;
                 for (Point point : (*leafnode.children))
                 {
-                    if (query_point.x == point.x && query_point.y == point.y)
+                    if (query_point.x == point.x && query_point.y == point.y && query_point.z == point.z)
                     {
                         return true;
                     }
@@ -445,27 +434,26 @@ bool RSMI::point_query(ExpRecorder &exp_recorder, Point query_point)
                 exp_recorder.page_access += 1;
                 for (Point point : (*leafnode.children))
                 {
-                    if (query_point.x == point.x && query_point.y == point.y)
+                    if (query_point.x == point.x && query_point.y == point.y && query_point.z == point.z)
                     {
                         return true;
                     }
                 }
             }
             gap++;
-            predicted_index_left = predicted_index - gap;
+            predicted_index_left  = predicted_index - gap;
             predicted_index_right = predicted_index + gap;
         }
 
         while (predicted_index_left >= front)
         {
             LeafNode leafnode = leafnodes[predicted_index_left];
-
             if (leafnode.mbr.contains(query_point))
             {
                 exp_recorder.page_access += 1;
                 for (Point point : (*leafnode.children))
                 {
-                    if (query_point.x == point.x && query_point.y == point.y)
+                    if (query_point.x == point.x && query_point.y == point.y && query_point.z == point.z)
                     {
                         return true;
                     }
@@ -478,13 +466,12 @@ bool RSMI::point_query(ExpRecorder &exp_recorder, Point query_point)
         while (predicted_index_right <= back)
         {
             LeafNode leafnode = leafnodes[predicted_index_right];
-
             if (leafnode.mbr.contains(query_point))
             {
                 exp_recorder.page_access += 1;
                 for (Point point : (*leafnode.children))
                 {
-                    if (query_point.x == point.x && query_point.y == point.y)
+                    if (query_point.x == point.x && query_point.y == point.y && query_point.z == point.z)
                     {
                         return true;
                     }
@@ -493,8 +480,6 @@ bool RSMI::point_query(ExpRecorder &exp_recorder, Point query_point)
             gap++;
             predicted_index_right = predicted_index + gap;
         }
-        // cout<< "not find" << endl;
-        // query_point.print();
         return false;
     }
     else
@@ -528,7 +513,6 @@ void RSMI::window_query(ExpRecorder &exp_recorder, vector<Mbr> query_windows)
 {
     long long time_cost = 0;
     int length = query_windows.size();
-    // length = 1;
     for (int i = 0; i < length; i++)
     {
         vector<Point> vertexes = query_windows[i].get_corner_points();
@@ -571,20 +555,13 @@ void RSMI::window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr q
                 predicted_index = predicted_index > width ? width : predicted_index;
                 int predicted_index_max = predicted_index + max_error;
                 int predicted_index_min = predicted_index + min_error;
-                if (predicted_index_min < min)
-                {
-                    min = predicted_index_min;
-                }
-                if (predicted_index_max > max)
-                {
-                    max = predicted_index_max;
-                }
+                if (predicted_index_min < min) min = predicted_index_min;
+                if (predicted_index_max > max) max = predicted_index_max;
             }
-
             front = min < 0 ? 0 : min;
-            back = max >= leafnodes_size ? leafnodes_size - 1 : max;
+            back  = max >= leafnodes_size ? leafnodes_size - 1 : max;
         }
-        for (size_t i = front; i <= back; i++)
+        for (size_t i = (size_t)front; i <= (size_t)back; i++)
         {
             LeafNode leafnode = leafnodes[i];
             if (leafnode.mbr.interact(query_window))
@@ -595,7 +572,6 @@ void RSMI::window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr q
                     if (query_window.contains(point))
                     {
                         exp_recorder.window_query_results.push_back(point);
-                        // exp_recorder.window_query_result_size++;
                     }
                 }
             }
@@ -612,22 +588,12 @@ void RSMI::window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr q
             int predicted_index = net->predict(vertexes[i]) * children_size;
             predicted_index = predicted_index < 0 ? 0 : predicted_index;
             predicted_index = predicted_index >= children_size ? children_size - 1 : predicted_index;
-            if (predicted_index < front)
-            {
-                front = predicted_index;
-            }
-            if (predicted_index > back)
-            {
-                back = predicted_index;
-            }
+            if (predicted_index < front) front = predicted_index;
+            if (predicted_index > back)  back  = predicted_index;
         }
-
-        for (size_t i = front; i <= back; i++)
+        for (size_t i = (size_t)front; i <= (size_t)back; i++)
         {
-            if (children.count(i) == 0)
-            {
-                continue;
-            }
+            if (children.count(i) == 0) continue;
             if (children[i].mbr.interact(query_window))
             {
                 children[i].window_query(exp_recorder, vertexes, query_window);
@@ -659,38 +625,23 @@ void RSMI::window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr q
             int min = width;
             for (size_t i = 0; i < vertexes.size(); i++)
             {
-                auto start = chrono::high_resolution_clock::now();
                 int predicted_index = net->predict(vertexes[i]) * leaf_node_num;
-                auto finish = chrono::high_resolution_clock::now();
                 predicted_index = predicted_index < 0 ? 0 : predicted_index;
                 predicted_index = predicted_index > width ? width : predicted_index;
                 int predictedIndexMax = predicted_index + max_error;
                 int predictedIndexMin = predicted_index + min_error;
-                if (predictedIndexMin < min)
-                {
-                    min = predictedIndexMin;
-                }
-                if (predictedIndexMax > max)
-                {
-                    max = predictedIndexMax;
-                }
+                if (predictedIndexMin < min) min = predictedIndexMin;
+                if (predictedIndexMax > max) max = predictedIndexMax;
             }
-
             front = min < 0 ? 0 : min;
-            back = max >= leafnodesSize ? leafnodesSize - 1 : max;
+            back  = max >= leafnodesSize ? leafnodesSize - 1 : max;
         }
-        for (size_t i = front; i <= back; i++)
+        for (size_t i = (size_t)front; i <= (size_t)back; i++)
         {
             LeafNode leafnode = leafnodes[i];
             float dis = leafnode.mbr.cal_dist(query_point);
-            if (dis > boundary)
-            {
-                continue;
-            }
-            if (exp_recorder.pq.size() >= k && dis > kth)
-            {
-                continue;
-            }
+            if (dis > boundary) continue;
+            if (exp_recorder.pq.size() >= (size_t)k && dis > kth) continue;
             if (leafnode.mbr.interact(query_window))
             {
                 exp_recorder.page_access += 1;
@@ -714,30 +665,16 @@ void RSMI::window_query(ExpRecorder &exp_recorder, vector<Point> vertexes, Mbr q
         int back = 0;
         for (size_t i = 0; i < vertexes.size(); i++)
         {
-            auto start = chrono::high_resolution_clock::now();
             int predicted_index = net->predict(vertexes[i]) * width;
-            auto finish = chrono::high_resolution_clock::now();
             predicted_index = predicted_index < 0 ? 0 : predicted_index;
             predicted_index = predicted_index >= width ? width - 1 : predicted_index;
-            if (predicted_index < front)
-            {
-                front = predicted_index;
-            }
-            if (predicted_index > back)
-            {
-                back = predicted_index;
-            }
+            if (predicted_index < front) front = predicted_index;
+            if (predicted_index > back)  back  = predicted_index;
         }
-        for (size_t i = front; i <= back; i++)
+        for (size_t i = (size_t)front; i <= (size_t)back; i++)
         {
-            if (children.count(i) == 0)
-            {
-                continue;
-            }
-            if (exp_recorder.pq.size() >= k && children[i].mbr.cal_dist(query_point) > kth)
-            {
-                continue;
-            }
+            if (children.count(i) == 0) continue;
+            if (exp_recorder.pq.size() >= (size_t)k && children[i].mbr.cal_dist(query_point) > kth) continue;
             if (children[i].mbr.interact(query_window))
             {
                 children[i].window_query(exp_recorder, vertexes, query_window, boundary, k, query_point, kth);
@@ -801,7 +738,6 @@ void RSMI::kNN_query(ExpRecorder &exp_recorder, vector<Point> query_points, int 
     int length = query_points.size();
     exp_recorder.time = 0;
     exp_recorder.page_access = 0;
-    // length = 2;
     for (int i = 0; i < length; i++)
     {
         priority_queue<Point , vector<Point>, sortForKNN2> temp_pq;
@@ -820,26 +756,18 @@ void RSMI::kNN_query(ExpRecorder &exp_recorder, vector<Point> query_points, int 
 
 double RSMI::cal_rho(Point point)
 {
-    // return 1;
     int predicted_index = net->predict(point) * width;
     predicted_index = predicted_index < 0 ? 0 : predicted_index;
     predicted_index = predicted_index >= width ? width - 1 : predicted_index;
     long long bk = 0;
     for (int i = 0; i < predicted_index; i++)
     {
-        if (children[i].N == 0)
-        {
-            return 1;
-        }
+        if (children[i].N == 0) return 1;
         bk += children[i].N;
     }
-    if (children[predicted_index].N == 0)
-    {
-        return 1;
-    }
+    if (children[predicted_index].N == 0) return 1;
     long long bk1 = bk + children[predicted_index].N;
     double result = bk1 * 1.0 / bk;
-    // TODO use 4 to avoid a large number
     result = result > 1 ? result : 1;
     result = result > 4 ? 4 : result;
     return result;
@@ -847,8 +775,6 @@ double RSMI::cal_rho(Point point)
 
 vector<Point> RSMI::kNN_query(ExpRecorder &exp_recorder, Point query_point, int k)
 {
-    // double rh0 = cal_rho(query_point);
-    // float knnquery_side = sqrt((float)k / N) * rh0;
     vector<Point> result;
     float knnquery_side = sqrt((float)k / N) * 4;
     while (true)
@@ -862,7 +788,7 @@ vector<Point> RSMI::kNN_query(ExpRecorder &exp_recorder, Point query_point, int 
         size = exp_recorder.pq.size();
         if (size >= k)
         {
-            for (size_t i = 0; i < k; i++)
+            for (size_t i = 0; i < (size_t)k; i++)
             {
                 result.push_back(exp_recorder.pq.top());
                 exp_recorder.pq.pop();
@@ -877,7 +803,6 @@ vector<Point> RSMI::kNN_query(ExpRecorder &exp_recorder, Point query_point, int 
 void RSMI::acc_kNN_query(ExpRecorder &exp_recorder, vector<Point> query_points, int k)
 {
     int length = query_points.size();
-    // length = 1;
     for (int i = 0; i < length; i++)
     {
         auto start = chrono::high_resolution_clock::now();
@@ -899,13 +824,12 @@ vector<Point> RSMI::acc_kNN_query(ExpRecorder &exp_recorder, Point query_point, 
     {
         Mbr mbr = Mbr::get_mbr(query_point, knnquery_side);
         vector<Point> tempResult = acc_window_query(exp_recorder, mbr);
-        if (tempResult.size() >= k)
+        if (tempResult.size() >= (size_t)k)
         {
             sort(tempResult.begin(), tempResult.end(), sortForKNN(query_point));
             Point last = tempResult[k - 1];
             if (last.cal_dist(query_point) <= knnquery_side)
             {
-                // TODO get top K from the vector.
                 auto bn = tempResult.begin();
                 auto en = tempResult.begin() + k;
                 vector<Point> vec(bn, en);
@@ -918,7 +842,6 @@ vector<Point> RSMI::acc_kNN_query(ExpRecorder &exp_recorder, Point query_point, 
     return result;
 }
 
-// TODO when rebuild!!!
 void RSMI::insert(ExpRecorder &exp_recorder, Point point)
 {
     int predicted_index = net->predict(point) * width;
@@ -928,7 +851,6 @@ void RSMI::insert(ExpRecorder &exp_recorder, Point point)
     {
         if (N == Constants::THRESHOLD)
         {
-            // cout << "rebuild: " << endl;
             is_last = false;
             vector<Point> points;
             for (LeafNode leafNode : leafnodes)
@@ -961,7 +883,6 @@ void RSMI::insert(ExpRecorder &exp_recorder, Point point)
     {
         if (children.count(predicted_index) == 0)
         {
-            // TODO
             return;
         }
         children[predicted_index].insert(exp_recorder, point);
@@ -986,14 +907,13 @@ void RSMI::remove(ExpRecorder &exp_recorder, Point point)
     predicted_index = predicted_index >= N ? N - 1 : predicted_index;
     if (is_last)
     {
-        // cout << "predicted_index: " << predicted_index << endl;
         int front = predicted_index + min_error;
         front = front < 0 ? 0 : front;
         int back = predicted_index + max_error;
         back = back >= N ? N - 1 : back;
         front = front / Constants::PAGESIZE;
-        back = back / Constants::PAGESIZE;
-        for (size_t i = front; i <= back; i++)
+        back  = back  / Constants::PAGESIZE;
+        for (size_t i = (size_t)front; i <= (size_t)back; i++)
         {
             LeafNode leafnode = leafnodes[i];
             vector<Point>::iterator iter = find(leafnode.children->begin(), leafnode.children->end(), point);

@@ -22,7 +22,7 @@ void LeafNode::add_point(Point point)
     // add
     children->push_back(point);
     // update MBR
-    mbr.update(point.x, point.y);
+    mbr.update(point.x, point.y, point.z);
 }
 
 void LeafNode::add_points(vector<Point> points)
@@ -83,7 +83,7 @@ bool LeafNode::delete_point(Point point)
             mbr.clean();
             for (int i = 0; i < children->size(); i++)
             {
-                mbr.update(point.x, point.y);
+                mbr.update(children->at(i).x, children->at(i).y, children->at(i).z);
             }
         }
         return true;

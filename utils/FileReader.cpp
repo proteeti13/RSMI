@@ -53,19 +53,19 @@ vector<Point> FileReader::get_points()
     ifstream file(filename);
     vector<Point> points;
     string line = "";
-    delimeter = "\t";
+    delimeter = " ";   // space-separated: SourceID Hop1_ID Hop2_ID
 
     while (getline(file, line))
     {
         vector<string> vec;
         boost::algorithm::split(vec, line, boost::is_any_of(delimeter));
-        if (vec.size() > 1)
+        if (vec.size() > 2)
         {
-            Point point(stod(vec[0]), stod(vec[1]));
+            // Dataset is pre-sorted by (SourceID, Hop1_ID, Hop2_ID) — do NOT re-sort.
+            Point point(stod(vec[0]), stod(vec[1]), stod(vec[2]));
             points.push_back(point);
         }
     }
-    // Close the File
     file.close();
 
     return points;
@@ -82,10 +82,12 @@ vector<Mbr> FileReader::get_mbrs()
     {
         vector<string> vec;
         boost::algorithm::split(vec, line, boost::is_any_of(delimeter));
-        Mbr mbr(stod(vec[0]), stod(vec[1]), stod(vec[2]), stod(vec[3]));
+        // 3D MBR: x1 y1 z1 x2 y2 z2
+        Mbr mbr(stod(vec[0]), stod(vec[1]), stod(vec[2]),
+                stod(vec[3]), stod(vec[4]), stod(vec[5]));
         mbrs.push_back(mbr);
     }
-    
+
     file.close();
 
     return mbrs;
@@ -102,8 +104,11 @@ vector<Point> FileReader::get_points(string filename, string delimeter)
     {
         vector<string> vec;
         boost::algorithm::split(vec, line, boost::is_any_of(delimeter));
-        Point point(stod(vec[0]), stod(vec[1]));
-        points.push_back(point);
+        if (vec.size() > 2)
+        {
+            Point point(stod(vec[0]), stod(vec[1]), stod(vec[2]));
+            points.push_back(point);
+        }
     }
     // Close the File
     file.close();
@@ -122,10 +127,12 @@ vector<Mbr> FileReader::get_mbrs(string filename, string delimeter)
     {
         vector<string> vec;
         boost::algorithm::split(vec, line, boost::is_any_of(delimeter));
-        Mbr mbr(stod(vec[0]), stod(vec[1]), stod(vec[2]), stod(vec[3]));
+        // 3D MBR: x1 y1 z1 x2 y2 z2
+        Mbr mbr(stod(vec[0]), stod(vec[1]), stod(vec[2]),
+                stod(vec[3]), stod(vec[4]), stod(vec[5]));
         mbrs.push_back(mbr);
     }
-    
+
     file.close();
 
     return mbrs;

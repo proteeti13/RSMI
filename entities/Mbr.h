@@ -12,9 +12,11 @@ public:
     float x2 = numeric_limits<float>::min();
     float y1 = numeric_limits<float>::max();
     float y2 = numeric_limits<float>::min();
+    float z1 = numeric_limits<float>::max();
+    float z2 = numeric_limits<float>::min();
     Mbr();
-    Mbr(float, float, float, float);
-    void update(float, float);
+    Mbr(float, float, float, float, float, float);
+    void update(float, float, float);
     void update(Point);
     void update(Mbr);
     bool contains(Point);

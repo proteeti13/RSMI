@@ -5,11 +5,11 @@ using namespace std;
 class Constants
 {
 public:
-    static const int DIM = 2;
+    static const int DIM = 3;
     static const int PAGESIZE = 100;
     static const int EACH_DIM_LENGTH = 8;
     static const int INFO_LENGTH = 8;
-    static const int MAX_WIDTH = 16;
+    static const int MAX_WIDTH = 4;   // 4^3 = 64 partitions per non-leaf level in 3D
     static const int EPOCH = 500;
     static const int START_EPOCH = 300;
     static const int EPOCH_ADDED = 100;

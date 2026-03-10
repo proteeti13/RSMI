@@ -113,11 +113,22 @@ struct sortY
     }
 };
 
-struct sort_curve_val
+struct sortZ
 {
     bool operator()(const Point point1, const Point point2)
     {
-        return (point1.curve_val < point2.curve_val);
+        return (point1.z < point2.z);
+    }
+};
+
+// Lexicographic comparator: (SourceID, Hop1_ID, Hop2_ID)
+struct sortLex3D
+{
+    bool operator()(const Point &a, const Point &b)
+    {
+        if (a.x != b.x) return a.x < b.x;
+        if (a.y != b.y) return a.y < b.y;
+        return a.z < b.z;
     }
 };
 

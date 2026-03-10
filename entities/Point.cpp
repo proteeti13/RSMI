@@ -15,10 +15,11 @@ Point::Point()
 {
 }
 
-Point::Point(float x, float y)
+Point::Point(float x, float y, float z)
 {
     this->x = x;
     this->y = y;
+    this->z = z;
 }
 
 bool Point::operator==(const Point &point)
@@ -27,7 +28,7 @@ bool Point::operator==(const Point &point)
     {
         return true;
     }
-    else if (this->x == point.x && this->y == point.y)
+    else if (this->x == point.x && this->y == point.y && this->z == point.z)
     {
         return true;
     }
@@ -37,13 +38,13 @@ bool Point::operator==(const Point &point)
 float Point::cal_dist(Point point)
 {
     if (temp_dist == 0)
-        temp_dist = sqrt(pow((point.x - x), 2) + pow((point.y - y), 2));
+        temp_dist = sqrt(pow((point.x - x), 2) + pow((point.y - y), 2) + pow((point.z - z), 2));
     return temp_dist;
 }
 
 void Point::print()
 {
-    cout << "(x=" << x << ",y=" << y << ")" << " index=" << index << " curve_val=" << curve_val << endl;
+    cout << "(x=" << x << ",y=" << y << ",z=" << z << ")" << " index=" << index << endl;
 }
 
 vector<Point> Point::get_points(vector<Point> dataset, int num)
@@ -67,7 +68,8 @@ vector<Point> Point::get_inserted_points(long long num)
     {
         float x = (float)(rand() % num) / num;
         float y = (float)(rand() % num) / num;
-        Point point(x, y);
+        float z = (float)(rand() % num) / num;
+        Point point(x, y, z);
         points.push_back(point);
     }
     return points;
@@ -75,5 +77,5 @@ vector<Point> Point::get_inserted_points(long long num)
 
 string Point::get_self()
 {
-    return to_string(x) + "," + to_string(y) + "\n";
+    return to_string(x) + " " + to_string(y) + " " + to_string(z) + "\n";
 }
