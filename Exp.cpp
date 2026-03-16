@@ -30,7 +30,7 @@ long long cardinality   = 10000;
 string distribution     = "triples";
 int skewness            = 1;
 string dataset_file     = "";
-long long limit         = 1000000;   // max tuples to load (default 1M)
+long long limit         = -1;        // -1 means no limit (load entire file)
 int num_queries         = 100000;    // lookup benchmark queries
 int query_seed          = 42;        // random seed for reproducibility
 
@@ -92,8 +92,8 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Truncate to limit
-    if ((long long)all_points.size() > limit)
+    // Truncate to limit (limit == -1 means load all)
+    if (limit >= 0 && (long long)all_points.size() > limit)
         all_points.resize((size_t)limit);
 
     cardinality = (long long)all_points.size();
