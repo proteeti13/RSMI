@@ -1,0 +1,29 @@
+Counting lines in datasets/wiki_vote_triples.txt … 4,542,805 tuples
+
+[19:59:39] Starting run: 1,000,000 tuples
+  command: ./Exp --dataset datasets/wiki_vote_triples.txt --limit 1000000
+Loaded 1000000 triples from datasets/wiki_vote_triples.txt
+  done – build 1022.5s  index 48.5 MB  mean 2.143 µs
+
+[20:16:46] Starting run: 2,500,000 tuples
+  command: ./Exp --dataset datasets/wiki_vote_triples.txt --limit 2500000
+Loaded 2500000 triples from datasets/wiki_vote_triples.txt
+  done – build 2732.9s  index 117.9 MB  mean 2.996 µs
+
+[21:02:23] Starting run: 4,542,805 tuples
+  command: ./Exp --dataset datasets/wiki_vote_triples.txt --limit 4542805
+Loaded 4542805 triples from datasets/wiki_vote_triples.txt
+  done – build 5270.0s  index 223.7 MB  mean 3.508 µs
+
+========================================================================================================
+RSMI Scalability Summary (wiki_vote_triples)
+========================================================================================================
+Dataset Size   | Build Time (s) | Index Size (MB) | Mean Latency (µs) | P95 (µs) | Throughput (q/s) | Avg Page Access
+--------------------------------------------------------------------------------------------------------
+1,000,000      |       1022.540 |          48.513 |             2.143 |    3.773 |           466537 |          2.8675
+2,500,000      |       2732.865 |         117.879 |             2.996 |    5.857 |           333819 |          2.4047
+FULL           |       5269.969 |         223.731 |             3.508 |    6.673 |           285064 |          2.2678
+========================================================================================================
+
+Summary saved → rsmi_wikivote_scalability_summary.txt
+CSV saved       → rsmi_wikivote_scalability.csv

@@ -18,8 +18,8 @@ OBJS=$(patsubst %.cpp, %.o, $(SRCS))
 #   unzip libtorch-cxx11-abi-shared-with-deps-2.5.1+cu121.zip
 #   mv libtorch ~/libtorch_gpu
 
-LIBTORCH_CPU = /home/proteetiwsl/libtorch
-LIBTORCH_GPU = /home/proteetiwsl/libtorch_gpu
+LIBTORCH_CPU = /home/proteeti/libtorch
+LIBTORCH_GPU = /home/proteeti/libtorch_gpu
 
 TYPE = CPU
 

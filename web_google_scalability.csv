@@ -1,0 +1,4 @@
+dataset_name,dataset_size,build_time_s,index_size_mb,mean_latency_us,p95_latency_us,throughput_qps,avg_page_access
+web_google,1000000,566.303,35.356,1.564,2.576,639256,2.0271
+web_google,2500000,1737.233,89.053,2.448,5.342,408503,2.0185
+web_google,60687836,78101.532,2212.788,8.976,14.135,111414,2.0032

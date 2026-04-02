@@ -11,7 +11,6 @@
 #include "../utils/ModelTools.h"
 // Hilbert/Z-curve headers removed: 3D key space uses lex-offset, not space-filling curves
 #include <map>
-#include <boost/smart_ptr/make_shared_object.hpp>
 #include <torch/script.h>
 #include <ATen/ATen.h>
 #include <torch/torch.h>

@@ -1,0 +1,29 @@
+Counting lines in datasets/roadnet_ca_triples.txt … 17,523,394 tuples
+
+[22:30:19] Starting run: 1,000,000 tuples
+  command: ./Exp --dataset datasets/roadnet_ca_triples.txt --limit 1000000
+Loaded 1000000 triples from datasets/roadnet_ca_triples.txt
+  done – build 1025.2s  index 41.4 MB  mean 1.592 µs
+
+[22:47:38] Starting run: 2,500,000 tuples
+  command: ./Exp --dataset datasets/roadnet_ca_triples.txt --limit 2500000
+Loaded 2500000 triples from datasets/roadnet_ca_triples.txt
+  done – build 3018.5s  index 101.2 MB  mean 2.238 µs
+
+[23:38:10] Starting run: 17,523,394 tuples
+  command: ./Exp --dataset datasets/roadnet_ca_triples.txt --limit 17523394
+Loaded 17523394 triples from datasets/roadnet_ca_triples.txt
+  done – build 21662.9s  index 705.0 MB  mean 4.979 µs
+
+========================================================================================================
+RSMI Scalability Summary (roadnet_ca)
+========================================================================================================
+Dataset Size   | Build Time (s) | Index Size (MB) | Mean Latency (µs) | P95 (µs) | Throughput (q/s) | Avg Page Access
+--------------------------------------------------------------------------------------------------------
+1,000,000      |       1025.185 |          41.390 |             1.592 |    2.768 |           628275 |          2.0028
+2,500,000      |       3018.520 |         101.184 |             2.238 |    3.953 |           446771 |          2.0023
+FULL           |      21662.867 |         705.022 |             4.979 |    9.753 |           200847 |          2.0014
+========================================================================================================
+
+Summary saved → roadnet_ca_scalability_summary.txt
+CSV saved       → roadnet_ca_scalability.csv

@@ -1,0 +1,4 @@
+dataset_name,dataset_size,build_time_s,index_size_mb,mean_latency_us,p95_latency_us,throughput_qps,avg_page_access
+roadnet_ca,1000000,1025.185,41.390,1.592,2.768,628275,2.0028
+roadnet_ca,2500000,3018.520,101.184,2.238,3.953,446771,2.0023
+roadnet_ca,17523394,21662.867,705.022,4.979,9.753,200847,2.0014

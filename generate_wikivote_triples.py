@@ -10,7 +10,7 @@ Output format (4 space-separated columns, lexicographically sorted):
     SourceID Hop1_ID Hop2_ID Offset
 
 Usage:
-    python3 generate_wikivote_triples.py Wiki-Vote.txt wiki_vote_triples.txt
+    python3 generate_wikivote_triples.py datasets/Wiki-Vote.txt datasets/wiki_vote_triples.txt
 """
 
 import sys

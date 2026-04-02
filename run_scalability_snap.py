@@ -30,7 +30,7 @@ import argparse
 
 EXP_BIN   = "./Exp"
 SIZES     = [1_000_000, 2_500_000]   # full dataset is appended after line-count
-MAX_FULL  = 5_000_000                # skip FULL run if dataset exceeds this size
+MAX_FULL  = 999_999_999              # allow FULL run for large SNAP datasets
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

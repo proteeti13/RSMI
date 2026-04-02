@@ -1,0 +1,29 @@
+Counting lines in datasets/web_google_triples.txt … 60,687,836 tuples
+
+[05:39:33] Starting run: 1,000,000 tuples
+  command: ./Exp --dataset datasets/web_google_triples.txt --limit 1000000
+Loaded 1000000 triples from datasets/web_google_triples.txt
+  done – build 566.3s  index 35.4 MB  mean 1.564 µs
+
+[05:49:43] Starting run: 2,500,000 tuples
+  command: ./Exp --dataset datasets/web_google_triples.txt --limit 2500000
+Loaded 2500000 triples from datasets/web_google_triples.txt
+  done – build 1737.2s  index 89.1 MB  mean 2.448 µs
+
+[06:19:23] Starting run: 60,687,836 tuples
+  command: ./Exp --dataset datasets/web_google_triples.txt --limit 60687836
+Loaded 60687836 triples from datasets/web_google_triples.txt
+  done – build 78101.5s  index 2212.8 MB  mean 8.976 µs
+
+========================================================================================================
+RSMI Scalability Summary (web_google)
+========================================================================================================
+Dataset Size   | Build Time (s) | Index Size (MB) | Mean Latency (µs) | P95 (µs) | Throughput (q/s) | Avg Page Access
+--------------------------------------------------------------------------------------------------------
+1,000,000      |        566.303 |          35.356 |             1.564 |    2.576 |           639256 |          2.0271
+2,500,000      |       1737.233 |          89.053 |             2.448 |    5.342 |           408503 |          2.0185
+FULL           |      78101.532 |        2212.788 |             8.976 |   14.135 |           111414 |          2.0032
+========================================================================================================
+
+Summary saved → web_google_scalability_summary.txt
+CSV saved       → web_google_scalability.csv
