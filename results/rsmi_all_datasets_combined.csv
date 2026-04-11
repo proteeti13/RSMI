@@ -1,0 +1,14 @@
+dataset_name,data_source,distribution,graph_type,full_dataset_size,subset_size,build_time_s,index_size_mb,mean_latency_us,p95_latency_us,throughput_qps,avg_page_access
+wiki_vote,SNAP,real_graph_directed,voting_network,4542805,1000000,1022.540,48.513,2.143,3.773,466537,2.8675
+wiki_vote,SNAP,real_graph_directed,voting_network,4542805,2500000,2732.865,117.879,2.996,5.857,333819,2.4047
+wiki_vote,SNAP,real_graph_directed,voting_network,4542805,4542805,5269.969,223.731,3.508,6.673,285064,2.2678
+roadnet_ca,SNAP,real_graph_undirected,road_network,17523394,1000000,1025.185,41.390,1.592,2.768,628275,2.0028
+roadnet_ca,SNAP,real_graph_undirected,road_network,17523394,2500000,3018.520,101.184,2.238,3.953,446771,2.0023
+roadnet_ca,SNAP,real_graph_undirected,road_network,17523394,17523394,21662.867,705.022,4.979,9.753,200847,2.0014
+web_google,SNAP,real_graph_directed,web_graph,60687836,1000000,566.303,35.356,1.564,2.576,639256,2.0271
+web_google,SNAP,real_graph_directed,web_graph,60687836,2500000,1737.233,89.053,2.448,5.342,408503,2.0185
+web_google,SNAP,real_graph_directed,web_graph,60687836,60687836,78101.532,2212.788,8.976,14.135,111414,2.0032
+lognormal,Synthetic,log-normal(mu=0.0 sigma=1.0),N/A,69999999,1000000,1094.700,38.600,1.731,N/A,N/A,N/A
+lognormal,Synthetic,log-normal(mu=0.0 sigma=1.0),N/A,69999999,10000000,13814.700,403.000,4.319,N/A,N/A,N/A
+lognormal,Synthetic,log-normal(mu=0.0 sigma=1.0),N/A,69999999,30000000,46579.151,1255.269,6.792,10.628,147223,2.0011
+lognormal,Synthetic,log-normal(mu=0.0 sigma=1.0),N/A,69999999,60000000,111522.132,2554.403,7.878,11.904,126943,2.0004

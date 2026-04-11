@@ -1,0 +1,15 @@
+Counting lines in datasets/lognormal_triples.txt … 69,999,999 unique triples
+
+[21:58:24] Starting run: 1M (1,000,000 tuples)
+  command: ./Exp --dataset datasets/lognormal_triples.txt --limit 1000000
+Loaded 1000000 triples from datasets/lognormal_triples.txt
+  done – build 1094.7s  index 38.6 MB  mean 1.731 µs
+
+[22:17:31] Starting run: 10M (10,000,000 tuples)
+  command: ./Exp --dataset datasets/lognormal_triples.txt --limit 10000000
+Loaded 10000000 triples from datasets/lognormal_triples.txt
+  done – build 13814.7s  index 403.0 MB  mean 4.319 µs
+
+[02:08:41] Starting run: 30M (30,000,000 tuples)
+  command: ./Exp --dataset datasets/lognormal_triples.txt --limit 30000000
+Loaded 30000000 triples from datasets/lognormal_triples.txt

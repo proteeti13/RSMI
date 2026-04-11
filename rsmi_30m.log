@@ -1,0 +1,11 @@
+Loaded 30000000 triples from datasets/lognormal_triples.txt
+
+RSMI Evaluation Results (lognormal_triples – 30000000 triples)
+-------------------------------------------------------
+Build Time (s):               46579.151
+Index Size (MB):              1255.269
+Mean Lookup Latency (us):     6.792
+P95 Lookup Latency (us):      10.628
+Query Throughput (q/s):       147223
+Average Page Accesses:        2.0011
+-------------------------------------------------------
