@@ -1,5 +1,0 @@
-dataset_name,distribution,size,build_time_s,index_size_mb,mean_latency,p95_latency,throughput,correctness,max_pred_error,avg_refine_window
-lognormal,log-normal(mu=0.0,sigma=1.0),1000000,1094.700,38.600,1.731,N/A,N/A,N/A,N/A,N/A
-lognormal,log-normal(mu=0.0,sigma=1.0),10000000,13814.700,403.000,4.319,N/A,N/A,N/A,N/A,N/A
-lognormal,log-normal(mu=0.0,sigma=1.0),30000000,46579.151,1255.269,6.792,10.628,147223,N/A,N/A,N/A
-lognormal,log-normal(mu=0.0,sigma=1.0),60000000,111522.132,2554.403,7.878,11.904,126943,N/A,N/A,N/A

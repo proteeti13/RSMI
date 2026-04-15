@@ -1,0 +1,4 @@
+dataset_name,dataset_size,build_time_s,index_size_mb,mean_latency_us,p95_latency_us,throughput_qps,avg_page_access
+uniform_dense,1000000,589.853,38.196,1.613,2.649,619956,2.0128
+uniform_dense,5000000,3950.389,186.986,3.075,5.246,325195,2.0037
+uniform_dense,10000000,10485.461,381.847,4.262,7.141,234627,2.0023

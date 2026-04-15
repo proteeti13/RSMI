@@ -1,0 +1,4 @@
+dataset_name,dataset_size,build_time_s,index_size_mb,mean_latency_us,p95_latency_us,throughput_qps,avg_page_access
+normal,1000000,497.464,33.643,1.783,3.797,560753,2.9492
+normal,5000000,4771.633,172.125,2.827,4.418,353774,2.1847
+normal,10000000,9905.972,349.143,4.034,6.694,247875,2.0704

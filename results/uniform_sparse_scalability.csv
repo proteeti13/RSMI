@@ -1,0 +1,4 @@
+dataset_name,dataset_size,build_time_s,index_size_mb,mean_latency_us,p95_latency_us,throughput_qps,avg_page_access
+uniform_sparse,1000000,484.190,31.926,1.301,1.780,768592,2.0006
+uniform_sparse,5000000,4130.068,159.395,3.381,8.185,295788,2.0002
+uniform_sparse,10000000,11140.133,318.414,5.078,9.660,196939,2.0001

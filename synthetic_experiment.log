@@ -1,0 +1,91 @@
+========================================================================
+RSMI Scalability Benchmark — Synthetic Datasets
+Datasets  : 2
+Sizes     : ['1,000,000', '5,000,000', '10,000,000']
+Total runs: 6
+========================================================================
+
+========================================================================
+  Dataset: normal  (datasets/normal_60M.txt)
+========================================================================
+
+[16:37:08]  START  1,000,000 tuples
+  cmd : ./Exp --dataset datasets/normal_60M.txt --limit 1000000
+Loaded 1000000 triples from datasets/normal_60M.txt
+  done — build 497.5s  index 33.6 MB  mean 1.783 µs
+
+[16:46:08]  START  5,000,000 tuples
+  cmd : ./Exp --dataset datasets/normal_60M.txt --limit 5000000
+Loaded 5000000 triples from datasets/normal_60M.txt
+  done — build 4771.6s  index 172.1 MB  mean 2.827 µs
+
+[18:06:23]  START  10,000,000 tuples
+  cmd : ./Exp --dataset datasets/normal_60M.txt --limit 10000000
+Loaded 10000000 triples from datasets/normal_60M.txt
+  done — build 9906.0s  index 349.1 MB  mean 4.034 µs
+
+========================================================================================================
+RSMI Scalability Summary (normal)
+========================================================================================================
+Dataset Size   | Build Time (s) | Index Size (MB) | Mean Latency (µs) | P95 (µs) | Throughput (q/s) | Avg Page Access
+--------------------------------------------------------------------------------------------------------
+1M             |        497.464 |          33.643 |             1.783 |    3.797 |           560753 |          2.9492
+5M             |       4771.633 |         172.125 |             2.827 |    4.418 |           353774 |          2.1847
+10M            |       9905.972 |         349.143 |             4.034 |    6.694 |           247875 |          2.0704
+========================================================================================================
+
+  Summary saved → results/normal_scalability_summary.txt
+  CSV saved       → results/normal_scalability.csv
+
+========================================================================
+  Dataset: lognormal  (datasets/lognormal_60M.txt)
+========================================================================
+
+[20:52:13]  START  1,000,000 tuples
+  cmd : ./Exp --dataset datasets/lognormal_60M.txt --limit 1000000
+Loaded 1000000 triples from datasets/lognormal_60M.txt
+  done — build 741.8s  index 38.6 MB  mean 1.721 µs
+
+[21:05:18]  START  5,000,000 tuples
+  cmd : ./Exp --dataset datasets/lognormal_60M.txt --limit 5000000
+Loaded 5000000 triples from datasets/lognormal_60M.txt
+  done — build 4610.8s  index 200.7 MB  mean 3.343 µs
+
+[22:22:52]  START  10,000,000 tuples
+  cmd : ./Exp --dataset datasets/lognormal_60M.txt --limit 10000000
+Loaded 10000000 triples from datasets/lognormal_60M.txt
+  done — build 10738.3s  index 407.5 MB  mean 4.643 µs
+
+========================================================================================================
+RSMI Scalability Summary (lognormal)
+========================================================================================================
+Dataset Size   | Build Time (s) | Index Size (MB) | Mean Latency (µs) | P95 (µs) | Throughput (q/s) | Avg Page Access
+--------------------------------------------------------------------------------------------------------
+1M             |        741.814 |          38.635 |             1.721 |    2.945 |           581114 |          2.0108
+5M             |       4610.763 |         200.701 |             3.343 |    5.735 |           299153 |          2.0046
+10M            |      10738.255 |         407.539 |             4.643 |    9.280 |           215368 |          2.0027
+========================================================================================================
+
+  Summary saved → results/lognormal_scalability_summary.txt
+  CSV saved       → results/lognormal_scalability.csv
+
+========================================================================================================
+Cross-Dataset Summary — Mean Lookup Latency (µs) at each scale checkpoint
+========================================================================================================
+Dataset              |         1M |         5M |        10M
+--------------------------------------------------------------------------------------------------------
+normal               |      1.783 |      2.827 |      4.034
+lognormal            |      1.721 |      3.343 |      4.643
+========================================================================================================
+
+========================================================================================================
+Cross-Dataset Summary — Query Throughput (q/s) at each scale checkpoint
+========================================================================================================
+Dataset              |         1M |         5M |        10M
+--------------------------------------------------------------------------------------------------------
+normal               |     560753 |     353774 |     247875
+lognormal            |     581114 |     299153 |     215368
+========================================================================================================
+
+All benchmarks complete.  Results written to results/
+
